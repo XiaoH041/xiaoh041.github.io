@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>2048</title>
+		<style type="text/css">
+			* {
+				padding: 0;
+				margin: 0;
+			
+			}
+			
+			div,
+			p,
+			h1,
+			h2,
+			a,
+			span {
+				font-family: Arial;
+				font-weight: bold;
+			}
+			
+			header {
+				padding-top: 16px;
+			}
+			
+			h1 {
+				font-size: 40px;
+				font-weight: bold;
+				text-align: center;
+			}
+			
+			#gamePanel {
+				margin: 0 auto;
+				width: 500px;
+				position: relative;
+			}
+			
+			#gridPanel {
+				width: 480px;
+				height: 480px;
+				background: #BBADA0;
+				border-radius: 10px;
+				padding: 20px 0 0 20px;
+				position: relative;
+			}
+			
+			#gamePanel p {
+				padding: 8px;
+			}
+			
+			.button {
+				display: inline-block;
+				padding: 10px;
+				background: #9F8B77;
+				border-radius: 6px;
+				color: #FFF;
+				cursor: pointer;
+			}
+			
+			.grid,
+			.cell {
+				width: 100px;
+				height: 100px;
+				border-radius: 6px;
+			}
+			
+			#gamePanel .grid {
+				background-color: #ccc0b3;
+				float: left;
+				margin: 0 20px 20px 0;
+			}
+			
+			.cell {
+				position: absolute;
+				line-height: 100px;
+				vertical-align: middle;
+				text-align: center;
+				font-size: 60px;
+				color: #776E65;
+			}
+			
+			#cell00,
+			#cell01,
+			#cell02,
+			#cell03 {
+				top: 20;
+			}
+			
+			#cell10,
+			#cell11,
+			#cell12,
+			#cell13 {
+				top: 140px;
+			}
+			
+			#cell20,
+			#cell21,
+			#cell22,
+			#cell23 {
+				top: 260px;
+			}
+			
+			#cell30,
+			#cell31,
+			#cell32,
+			#cell33 {
+				top: 380px;
+			}
+			
+			#cell00,
+			#cell10,
+			#cell20,
+			#cell30 {
+				left: 20px;
+			}
+			
+			#cell01,
+			#cell11,
+			#cell21,
+			#cell31 {
+				left: 140px;
+			}
+			
+			#cell02,
+			#cell12,
+			#cell22,
+			#cell32 {
+				left: 260px;
+			}
+			
+			#cell03,
+			#cell13,
+			#cell23,
+			#cell33 {
+				left: 380px;
+			}
+			
+			.num8,
+			.num16,
+			.num32,
+			.num64,
+			.num128,
+			.num256,
+			.num512,
+			.num1024,
+			.num2048,
+			.num4096,
+			.num8192 {
+				color: #fff;
+			}
+			
+			.num1024,
+			.num2048,
+			.num4096,
+			.num8192 {
+				font-size: 40px;
+			}
+			
+			.num2 {
+				background: #eee4da;
+			}
+			
+			.num4 {
+				background: #ede0c8;
+			}
+			
+			.num8 {
+				background: #f2b179;
+			}
+			
+			.num16 {
+				background: #f59563;
+			}
+			
+			.num32 {
+				background: #f67c5f;
+			}
+			
+			.num64 {
+				background: #f65e3b;
+			}
+			
+			.num128 {
+				background: #edcf72;
+			}
+			
+			.num256 {
+				background: #edcc61;
+			}
+			
+			.num512 {
+				background: #9c0;
+			}
+			
+			.num1024 {
+				background: #33b5e5;
+			}
+			
+			.num2048 {
+				background: #09c;
+			}
+			
+			.num4096 {
+				background: #a6c;
+			}
+			
+			.num8192 {
+				background: #93c;
+			}
+			
+			#gameOver {
+				display: none;
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				top: 0;
+				left: 0;
+			}
+			
+			#gameOver div {
+				width: 100%;
+				height: 100%;
+				background: #555;
+				filter: alpha(Opacity=50);
+				-moz-opacity: 0.5;
+				opacity: 0.5;
+			}
+			
+			#gameOver p {
+				position: absolute;
+				top: 150px;
+				left: 100px;
+				border-radius: 10px;
+				width: 300px;
+				border: 1px solid #EDCF72;
+				background: #fff;
+				line-height: 1.6em;
+				font-size: 30px;
+				color: #000;
+				text-align: center;
+			}
+			
+			.writer {
+				width: 80px;
+				margin-left: 30%;
+			}
+			
+		</style>
+		<script type="text/javascript">
+			var cells = [
+				[2, 0, 0, 0],
+				[0, 32, 0, 0],
+				[0, 4, 0, 0],
+				[0, 0, 2048, 0]
+			];
+			var PLAYING = 0;
+			var CELL_MOVEING = 1;
+			var GAME_OVER = 2;var score = 0;
+			var state = PLAYING;
+			var effect = true;
+			function upAction() {
+				if (state == CELL_MOVEING) {
+					return false;
+				}
+				if (!canMoveUp()) {
+					return false;
+				}
+				for (var col = 0; col < 4; col++) {
+					upCol(col);
+				}
+				return true;
+			}
+			function upCol(col) {
+				for (var row = 0; row < 4;) {
+					var current = cells[row][col];
+					var nextRow = getNextInCol(col, row + 1, 1);
+					if (nextRow == -1) {
+						return;
+					}
+					var next = cells[nextRow][col];
+
+					if (current == 0) {
+						cells[row][col] = next;
+						cells[nextRow][col] = 0;
+						if (effect) {
+							var obj = $("cell" + nextRow + col);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else if (current == next) {
+						cells[row][col] = next + current;
+						cells[nextRow][col] = 0;
+
+						score += cells[row][col];
+
+						row++;
+						if (effect) { 
+							var obj = $("cell" + nextRow + col);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else {
+						row++;
+					}
+				}
+			}
+
+			function getNextInCol(col, startRow, step) {
+				var row = startRow;
+				while (true) {
+					if (row < 0 || row >= 4) {
+						return -1;
+					}
+					if (cells[row][col] != 0) {
+						return row;
+					}
+					row += step;
+				}
+			}
+
+			function getNextInRow(row, startCol, step) {
+				var col = startCol;
+				while (true) {
+					if (col < 0 || col >= 4) {
+						return -1;
+					}
+					if (cells[row][col] != 0) {
+						return col;
+					}
+					col += step;
+				}
+			}
+
+			function downAction() {
+				if (state == CELL_MOVEING) {
+					return false;
+				}
+				if (!canMoveDown()) {
+					return false;
+				}
+				for (var col = 0; col < 4; col++) {
+					downCol(col);
+				}
+				return true;
+			}
+			function downCol(col) {
+				for (var row = 3; row >= 0;) {
+					var current = cells[row][col];
+					var nextRow = getNextInCol(col, row - 1, -1);
+					if (nextRow == -1) {
+						return;
+					}
+					var next = cells[nextRow][col];
+
+					if (current == 0) {
+						cells[row][col] = next;
+						cells[nextRow][col] = 0;
+						if (effect) { 
+							var obj = $("cell" + nextRow + col);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else if (current == next) {
+						cells[row][col] = next + current;
+						cells[nextRow][col] = 0;
+
+						score += cells[row][col];
+
+						row--;
+
+						if (effect) {
+							var obj = $("cell" + nextRow + col);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else {
+						row--;
+					}
+				}
+			}
+
+			function leftAction() {
+				if (state == CELL_MOVEING) {
+					return false;
+				}
+				if (!canMoveLeft()) {
+					return false;
+				}
+				for (var row = 0; row < 4; row++) {
+					moveLeft(row);
+				}
+				return true;
+			}
+			function moveLeft(row) {
+				for (var col = 0; col < 4;) {
+					var current = cells[row][col];
+					var nextCol = getNextInRow(row, col + 1, 1);
+					if (nextCol == -1) {
+						return;
+					}
+					var next = cells[row][nextCol];
+
+					if (current == 0) {
+						cells[row][col] = next;
+						cells[row][nextCol] = 0;
+						if (effect) {
+							var obj = $("cell" + row + nextCol);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else if (current == next) {
+						cells[row][col] = next + current;
+						cells[row][nextCol] = 0;
+
+						score += cells[row][col];
+
+						col++;
+						if (effect) { 
+							var obj = $("cell" + row + nextCol);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else {
+						col++;
+					}
+				}
+			}
+
+			function rightAction() {
+				if (state == CELL_MOVEING) {
+					return false;
+				}
+				if (!canMoveRight()) {
+					return false;
+				}
+				for (var row = 0; row < 4; row++) {
+					moveRight(row);
+				}
+				return true;
+			}
+			function moveRight(row) {
+				for (var col = 3; col >= 0;) {
+					var current = cells[row][col];
+					var nextCol = getNextInRow(row, col - 1, -1);
+					if (nextCol == -1) {
+						return;
+					}
+					var next = cells[row][nextCol];
+
+					if (current == 0) {
+						cells[row][col] = next;
+						cells[row][nextCol] = 0;
+						if (effect) {
+							var obj = $("cell" + row + nextCol);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else if (current == next) {
+						cells[row][col] = next + current;
+						cells[row][nextCol] = 0;
+
+
+						score += cells[row][col];
+
+						col--;
+
+						if (effect) { 
+							var obj = $("cell" + row + nextCol);
+							var top = row * 120 + 20;
+							var left = col * 120 + 20;
+							animation.add(obj, top, left);
+						}
+					} else {
+						col--;
+					}
+				}
+			}
+
+			function canMoveUp() {
+				for (var col = 0; col < 4; col++) {
+					for (var row = 1; row < 4; row++) {
+						if (cells[row][col] != 0 && cells[row - 1][col] == 0) {
+							return true;
+						}
+						if (cells[row][col] != 0 && (cells[row][col] == cells[row - 1][col])) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+
+			function canMoveDown() {
+				for (var col = 0; col < 4; col++) {
+					for (var row = 0; row < 3; row++) {
+						if (cells[row][col] != 0 && cells[row + 1][col] == 0) {
+							return true;
+						}
+						if (cells[row][col] != 0 && (cells[row][col] == cells[row + 1][col])) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+
+			function canMoveLeft() {
+				for (var col = 1; col < 4; col++) {
+					for (var row = 0; row < 4; row++) {
+						if (cells[row][col] != 0 && cells[row][col - 1] == 0) {
+							return true;
+						}
+						if (cells[row][col] != 0 && (cells[row][col] == cells[row][col - 1])) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+
+			function canMoveRight() {
+				for (var col = 0; col < 3; col++) {
+					for (var row = 0; row < 4; row++) {
+						if (cells[row][col] != 0 && cells[row][col + 1] == 0) {
+							return true;
+						}
+						if (cells[row][col] != 0 && (cells[row][col] == cells[row][col + 1])) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+
+
+			function test() {
+				rightAction();
+				state = CELL_MOVEING;
+				animation.start(function() {
+					randomNumber();
+					updateView();
+					state = PLAYING;
+				});
+			}
+
+			function updateView() {
+				for (var row = 0; row < 4; row++) {
+					for (var col = 0; col < 4; col++) {
+						var n = cells[row][col];
+						var cell = $("cell" + row + col);
+						cell.className = "cell";
+						cell.innerHTML = "";
+						if (n > 0) {
+							cell.className = "cell num" + n;
+							cell.innerHTML = n;
+						}
+					}
+				}
+
+				$("score").innerHTML = score;
+				$("finalScore").innerHTML = score;
+
+			}
+			function full() {
+				for (var row = 0; row < 4; row++) {
+					for (var col = 0; col < 4; col++) {
+						if (cells[row][col] == 0) {
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+			function randomNumber() {
+				if (full()) {
+					return false;
+				}
+				while (true) {
+					var col = parseInt(Math.random() * 4);
+					var row = parseInt(Math.random() * 4);
+					if (cells[row][col] == 0) {
+						var n = Math.random() < 0.5 ? 2 : 4;
+						cells[row][col] = n;
+						return true;
+					}
+				}
+			}
+
+			function startAction() {
+				$("gameOver").style.display = "none";
+				for (var row = 0; row < 4; row++) {
+					for (var col = 0; col < 4; col++) {
+						cells[row][col] = 0;
+					}
+				}
+				score = 0;
+				randomNumber();
+				randomNumber();
+				updateView();
+				state = PLAYING;
+			}
+			function $(id) {
+				return document.getElementById(id);
+			}
+
+			function has8192() {
+				for (var row = 0; row < 4; row++) {
+					for (var col = 0; col < 4; col++) {
+						if (cells[row][col] == 8192) {
+							return true;
+						}
+					}
+				}
+			}
+
+			function hasSpace() {
+				for (var row = 0; row < 4; row++) {
+					for (var col = 0; col < 4; col++) {
+						if (cells[row][col] == 0) {
+							return true;
+						}
+					}
+				}
+			}
+
+			function gameOver() {
+				if (has8192()) {
+					state = GAME_OVER;
+					$("gameOver").style.display = "block";
+					return true;
+				}
+   	
+				if (hasSpace()) {
+					return false;
+				}
+
+                if (canMoveUp() || canMoveDown() || canMoveLeft() || canMoveRight()) {
+					return false;
+				}
+				state = GAME_OVER;
+				$("gameOver").style.display = "block";
+				return true;
+			}
+
+			window.onload = function() {
+				$("newGame").onclick = function() {
+					if (state == PLAYING)
+						startAction();
+				}
+				$("restart").onclick = function() {
+					if (state == GAME_OVER)
+						startAction();
+				}
+				startAction();
+				document.onkeydown = function(event) {
+					if (state != PLAYING) {
+						return;
+					}
+					var move = false;
+					switch (event.keyCode) {
+						case 37: 
+							move = leftAction();
+							break;
+						case 38:
+							move = upAction();
+							break;
+						case 39: 
+							move = rightAction();
+							break;
+						case 40: 
+							move = downAction();
+							break;
+					}
+					if (!move) {
+						return;
+					}
+					if (effect) {
+						state = CELL_MOVEING;
+						animation.start(function() {
+							updateView();
+							state = PLAYING;
+							if (!gameOver()) {
+								setTimeout(function() {
+									randomNumber();
+									updateView();
+								}, 100);
+							}
+						});
+					} else {
+						if (!gameOver()) {
+							setTimeout(function() {
+								randomNumber();
+								updateView();
+							}, 100);
+						}
+
+						updateView();
+						state = PLAYING;
+					}
+					gameOver();
+				}; 
+			}
+			
+			var animation = {
+				tasks: [], 
+				timer: null, 
+				times: 10, 
+				interval: 1000 / 60, 
+				add: function(obj, top, left) {
+			
+					if (this.timer) {
+						return false;
+					}
+					if (!obj) {
+						return false;
+					}
+
+					var t = (top - obj.offsetTop) / this.times;
+					var l = (left - obj.offsetLeft) / this.times;
+			
+					var task = {
+						topStep: t,
+						leftStep: l,
+						element: obj,
+						step: function() {
+							var t = this.element.offsetTop;
+							this.element.style.top = (t + this.topStep) + "px";
+							var l = this.element.offsetLeft;
+							this.element.style.left = (l + this.leftStep) + "px";
+						},
+						clear: function() {
+							this.element.style.top = "";
+							this.element.style.left = "";
+						}
+					};
+					this.tasks[this.tasks.length] = task;
+					return true;
+				},
+				start: function(callback) {
+					if (this.timer) {
+						return false;
+					}
+			
+					console.log("STATRING");
+					if (this.tasks.length == 0) {
+						if (callback) {
+							callback();
+						}
+						return false;
+					}
+			
+					if (callback) {
+						this.callback = callback;
+					}
+					this.timer = setInterval(function() {
+
+						for (var i = 0; i < animation.tasks.length; i++) {
+							var task = animation.tasks[i];
+							task.step();
+						}
+			
+						animation.times--;
+						if (animation.times < 0) {
+							animation.stop();
+						}
+					}, this.interval);
+					return true;
+				},
+				stop: function() {
+					if (this.timer) {
+						window.clearInterval(this.timer);
+						this.timer = null;
+						this.times = 10;
+			
+					}
+			
+					if (this.callback) {
+						this.callback();
+					}
+					for (var i = 0; i < this.tasks.length; i++) {
+						var task = this.tasks[i];
+						task.clear();
+					}
+					this.tasks = [];
+				},
+				callback: null
+			};
+			
+		</script>
+	</head>
+	<body>
+		<header>
+			<h1>2048</h1>
+		</header>
+		<div id="gamePanel">
+			<p><a class="button" id="newGame">新游戏</a> 分数: <span id="score">0</span></p>
+			<div id="gridPanel">
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+				<div class="grid"> </div>
+
+				<div class="cell " id="cell00"> </div>
+				<div class="cell " id="cell01"> </div>
+				<div class="cell " id="cell02"> </div>
+				<div class="cell " id="cell03"> </div>
+
+				<div class="cell " id="cell10"> </div>
+				<div class="cell " id="cell11"> </div>
+				<div class="cell " id="cell12"> </div>
+				<div class="cell " id="cell13"> </div>
+
+				<div class="cell " id="cell20"> </div>
+				<div class="cell " id="cell21"> </div>
+				<div class="cell " id="cell22"> </div>
+				<div class="cell " id="cell23"> </div>
+
+				<div class="cell " id="cell30"> </div>
+				<div class="cell " id="cell31"> </div>
+				<div class="cell " id="cell32"> </div>
+				<div class="cell " id="cell33"> </div>
+
+			</div>
+			<div id="gameOver">
+				<div>
+				</div>
+				<p>
+					游戏结束！<br>
+					分数: <span id="finalScore">0</span><br>
+					<a class="button" id="restart">再试一次</a>
+				</p>
+			</div>
+		</div>
+	</body>
+</html>
+
